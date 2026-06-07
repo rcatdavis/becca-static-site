@@ -1,16 +1,44 @@
-import { useState } from 'react';
-import { Clock, Plus } from 'lucide-react';
-import WarningBanner from './components/WarningBanner';
-import AlertTable from './components/AlertTable';
-import CreateAlertModal from './components/CreateAlertModal';
-import LimitIncreaseModal from './components/LimitIncreaseModal';
+import { useMemo, useState } from 'react';
+import { Clock } from 'lucide-react';
+import SpendThisMonth from './components/SpendThisMonth';
+import DealsTable from './components/DealsTable';
+import UsageHistoryTable from './components/UsageHistoryTable';
+import DealModal from './components/DealModal';
+import { getCommitmentView } from './data';
+
+const TABS = ['Overview', 'Usage', 'Insights', 'Invoices', 'Settings'];
 
 export default function App() {
-  const [createAlertOpen, setCreateAlertOpen] = useState(false);
-  const [limitIncreaseOpen, setLimitIncreaseOpen] = useState(false);
+  const [scenario, setScenario] = useState('at-risk');
+  const [activeDeal, setActiveDeal] = useState(null);
+
+  const commitmentView = useMemo(() => getCommitmentView(scenario), [scenario]);
 
   return (
     <div className="min-h-screen bg-do-bg">
+      {/* Console tab bar */}
+      <div className="border-b border-do-border bg-white">
+        <div className="max-w-6xl mx-auto px-6">
+          <nav className="flex gap-6">
+            {TABS.map((t) => (
+              <button
+                key={t}
+                className={`relative py-3.5 text-sm font-medium transition-colors cursor-pointer ${
+                  t === 'Insights'
+                    ? 'text-do-gray-900'
+                    : 'text-do-gray-500 hover:text-do-gray-700'
+                }`}
+              >
+                {t}
+                {t === 'Insights' && (
+                  <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-do-blue-500 rounded-full" />
+                )}
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+
       {/* Disclaimer bar */}
       <div className="border-b border-do-border bg-white">
         <div className="max-w-6xl mx-auto px-6 py-2.5 flex items-center gap-2">
@@ -22,42 +50,31 @@ export default function App() {
       </div>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-do-gray-900">
-            Serverless Budgets &amp; Limits
-          </h1>
-          <button
-            onClick={() => setCreateAlertOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-do-blue-500 rounded-md hover:bg-do-blue-600 transition-colors shadow-sm cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            Create Spend Alert
-          </button>
-        </div>
-
-        {/* Warning banner */}
         <div className="mb-6">
-          <WarningBanner onIncrease={() => setLimitIncreaseOpen(true)} />
+          <h1 className="text-2xl font-bold text-do-gray-900">Billing insights</h1>
+          <p className="text-sm text-do-gray-500 mt-1">
+            Track your spend this month and how it counts toward your discounts.
+          </p>
         </div>
 
-        {/* Active Alerts section */}
-        <div>
-          <h2 className="text-xs font-semibold text-do-gray-500 uppercase tracking-wider mb-3">
-            Active Alerts
-          </h2>
-          <AlertTable />
+        <div className="space-y-6">
+          <SpendThisMonth />
+          <DealsTable
+            scenario={scenario}
+            onScenarioChange={setScenario}
+            commitmentView={commitmentView}
+            onOpenDeal={setActiveDeal}
+          />
+          <UsageHistoryTable />
         </div>
       </main>
 
-      {/* Modals */}
-      <CreateAlertModal
-        open={createAlertOpen}
-        onClose={() => setCreateAlertOpen(false)}
-      />
-      <LimitIncreaseModal
-        open={limitIncreaseOpen}
-        onClose={() => setLimitIncreaseOpen(false)}
+      <DealModal
+        key={activeDeal?.id ?? 'closed'}
+        open={!!activeDeal}
+        deal={activeDeal}
+        commitmentView={commitmentView}
+        onClose={() => setActiveDeal(null)}
       />
     </div>
   );
