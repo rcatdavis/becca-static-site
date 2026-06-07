@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Billing Insights discount prototype</title>
+<style>
+  :root{
+    --navy:#031b4e;--text:#24324a;--soft:#53627c;--muted:#7c8aa1;--muted2:#a6b0c1;
+    --line:#e3e8f1;--line2:#eef2f7;--bg:#f7f9fc;--card:#fff;--blue:#0069ff;
+    --green:#18795b;--greenBg:#eefaf4;--amber:#f5a623;--amberBg:#fff8e7;
+    --purple:#6457e8;--purpleBg:#f1efff;--track:#edf1f7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  button{font:inherit}
+  .page{max-width:1120px;margin:0 auto;padding:30px 24px 80px}
+  .eyebrow{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted2);margin:0 0 10px}
+  h1{font-size:24px;letter-spacing:-.03em;color:var(--navy);margin:0 0 6px}
+  .lede{font-size:13px;color:var(--soft);line-height:1.45;margin:0 0 22px;max-width:780px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.05)}
+  .cardHead{padding:17px 18px 13px;border-bottom:1px solid var(--line2)}
+  .cardTitle{font-size:15px;font-weight:800;color:var(--navy);margin:0}
+  .cardSub{font-size:11px;color:var(--muted);margin:4px 0 0}
+  .grid,.row{display:grid;grid-template-columns:1.75fr 1.35fr 1.45fr .88fr 22px;gap:16px;align-items:center}
+  .grid{padding:10px 18px 9px;background:#fbfcfe;color:var(--muted2);font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--line2)}
+  .row{width:100%;border:0;background:#fff;text-align:left;padding:15px 18px;border-bottom:1px solid var(--line2);cursor:pointer;color:inherit}
+  .row:hover,.row.active{background:#fbfdff}
+  .name{font-size:13px;font-weight:800;color:var(--text)}
+  .name small{display:block;color:var(--muted);font-size:11px;font-weight:600;margin-top:3px}
+  .val{font-size:12.5px;color:var(--soft);font-variant-numeric:tabular-nums}
+  .val b{color:var(--text)}
+  .exp{font-size:12px;color:var(--muted);text-align:right}
+  .dot{width:13px;height:13px;border:1.5px solid #b8c4d7;border-radius:50%;justify-self:end}
+  .row.active .dot{border-color:var(--blue);box-shadow:inset 0 0 0 3px white;background:var(--blue)}
+  .bar{height:7px;border-radius:999px;background:var(--track);position:relative;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:999px;background:var(--amber)}
+  .bar.blue i{background:linear-gradient(90deg,var(--blue),#6c63ff)}
+  .bar .target{position:absolute;top:-3px;bottom:-3px;width:2px;background:#c56d2c;border-radius:2px}
+  .barMeta{font-size:10.5px;color:var(--muted);margin-top:5px}
+  .scenario{display:flex;gap:0;margin:22px 0}
+  .scenario span{align-self:center;margin-right:12px;color:var(--muted2);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}
+  .scenario button{border:1px solid var(--line);background:#fff;color:var(--muted);font-size:12px;font-weight:700;padding:9px 16px}
+  .scenario button:first-of-type{border-radius:8px 0 0 8px}
+  .scenario button:last-of-type{border-radius:0 8px 8px 0}
+  .scenario .on{background:#f1f5ff;color:var(--navy);box-shadow:inset 0 -2px 0 var(--blue)}
+  .usageTop{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px}
+  .sectionTitle{font-size:15px;font-weight:800;margin:0 0 4px}
+  .sectionSub{font-size:11px;color:var(--muted);margin:0}
+  .btn{border:1px solid #ccd5e3;background:#fff;border-radius:6px;color:#2e3b52;padding:7px 11px;font-size:12px;font-weight:700}
+  table{width:100%;border-collapse:separate;border-spacing:0}
+  .usage{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+  th{background:#fbfcfe;color:#9aa6ba;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;text-align:left;padding:12px 14px;border-bottom:1px solid var(--line2)}
+  td{font-size:13px;color:var(--text);padding:13px 14px;border-bottom:1px solid var(--line2);vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .overlay{position:fixed;inset:0;background:rgba(3,27,78,.08);z-index:10}
+  .drawer{position:fixed;top:0;right:0;width:min(960px,100vw);height:100vh;z-index:11;background:#fff;box-shadow:-10px 0 30px rgba(3,27,78,.14);display:flex;flex-direction:column;border-left:1px solid var(--line)}
+  .drawer.hidden,.overlay.hidden{display:none}
+  .drawerHead{height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 28px;border-bottom:1px solid var(--line2)}
+  .drawerTitle{font-size:27px;font-weight:800;letter-spacing:-.04em;color:var(--navy);margin:0}
+  .close{border:0;background:transparent;color:#9aa7bb;font-size:36px;line-height:1;cursor:pointer}
+  .tabs{display:flex;border-bottom:1px solid var(--line2);padding:0 24px}
+  .tab{border:0;background:#fff;color:#6b7890;font-size:20px;font-weight:800;padding:20px 18px 17px;border-bottom:3px solid transparent;cursor:pointer}
+  .tab.active{color:var(--navy);border-bottom-color:var(--blue)}
+  .body{overflow:auto;padding:22px 24px 96px}
+  .panel{display:none}
+  .panel.active{display:block}
+  .status{border:1px solid #ffd978;background:#fffdf7;border-radius:10px;padding:22px;margin-bottom:22px}
+  .statusTop{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  .status h3{font-size:26px;font-weight:800;letter-spacing:-.03em;color:var(--navy);margin:0 0 10px}
+  .status p{font-size:14px;line-height:1.45;color:#9a5b16;margin:0;max-width:680px}
+  .badge{display:inline-flex;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:800;text-transform:uppercase;white-space:nowrap}
+  .warn{border:1px solid #f7cf5b;background:#fff9e8;color:#9a5b16}
+  .ok{background:var(--greenBg);color:var(--green)}
+  .label{font-size:12px;font-weight:800;letter-spacing:.08em;color:#7a8aa5;text-transform:uppercase;margin:24px 0 8px}
+  .big{font-size:34px;font-weight:800;color:var(--navy);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+  .big span{color:#8d98aa;font-weight:700}
+  .wide{height:13px;border-radius:999px;background:var(--track);position:relative;margin:18px 0 10px}
+  .wide i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--amber)}
+  .wide.blue i{background:var(--blue)}
+  .wide .pin{position:absolute;top:-7px;width:2px;height:27px;background:#c56d2c;border-radius:2px}
+  .scale{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+  .scale b{color:var(--text)}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0 28px}
+  .miniCard{border:1px solid var(--line);border-radius:10px;background:#fff;padding:16px}
+  .miniCard .k{font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--muted2);text-transform:uppercase;margin-bottom:7px}
+  .miniCard .v{font-size:18px;font-weight:800;color:var(--navy)}
+  .miniCard .x{font-size:12px;color:var(--soft);line-height:1.45;margin-top:7px}
+  .h2{font-size:20px;font-weight:800;margin:28px 0 14px;letter-spacing:-.02em}
+  .terms{display:grid;grid-template-columns:1fr 1fr;gap:18px 42px;margin-bottom:26px}
+  .termK{font-size:17px;color:#9ba8bc;margin-bottom:4px}
+  .termV{font-size:20px;font-weight:700;line-height:1.3}
+  .link{display:inline-flex;gap:10px;align-items:center;color:var(--blue);font-weight:800;font-size:18px;text-decoration:none}
+  .note{border:1px solid #d7e5ff;background:#f5f9ff;border-radius:10px;padding:14px 16px;color:#33455e;font-size:13px;line-height:1.55;margin:14px 0 22px}
+  .note b{color:var(--navy)}
+  .metric{border:1px solid var(--line);border-radius:10px;background:#fff;padding:20px 22px;margin-bottom:20px}
+  .metric .k{font-size:14px;font-weight:800;color:#7f8da4;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+  .metric .v{font-size:38px;font-weight:800;color:var(--navy);letter-spacing:-.05em;margin-bottom:8px}
+  .metric .x{font-size:20px;color:var(--soft);line-height:1.35}
+  .product{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;margin:14px 0 22px}
+  .product .pname{font-weight:800;color:var(--text)}
+  .small{display:block;color:var(--muted);font-size:11.5px;margin-top:4px;line-height:1.35}
+  .right{text-align:right;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+  .tag{display:inline-flex;align-items:center;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:800}
+  .purple{background:var(--purpleBg);color:#574bd2}.blueTag{background:#eaf2ff;color:#1754b8}.amberTag{background:var(--amberBg);color:#9a5b16}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{font-size:12px;font-weight:700;color:#40506a;background:#f3f6fa;border:1px solid var(--line);border-radius:6px;padding:5px 9px}
+  .chip.excl{color:#955f14;background:#fff6e5;border-color:#f4ddad;text-decoration:line-through;text-decoration-color:#ba7a25}
+  .chip.auto{color:#1754b8;background:#eaf2ff;border-color:#cfe0ff}
+  .foot{position:absolute;left:0;right:0;bottom:0;height:58px;background:#fbfcfe;border-top:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;padding:0 24px}
+  .foot a{color:var(--blue);text-decoration:none;font-weight:800;font-size:16px}.foot a:last-child{color:#4c5a70}
+  @media(max-width:760px){.grid{display:none}.row{grid-template-columns:1fr}.exp{text-align:left}.drawerTitle{font-size:22px}.tab{font-size:17px}.cards,.terms{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="page">
+  <p class="eyebrow">Billing insights</p>
+  <h1>Discounts and commitments</h1>
+  <p class="lede">Track how your active agreements apply to eligible usage, which product groups count toward your minimum, and where any shortfall would be billed.</p>
+
+  <section class="card">
+    <div class="cardHead">
+      <h2 class="cardTitle">Commitment &amp; volume deals</h2>
+      <p class="cardSub">Active agreements on your account · select a row for details</p>
+    </div>
+    <div class="grid"><div>Deal name</div><div>Pacing</div><div>Spend / tier</div><div>Expires</div><div></div></div>
+    <button class="row active" data-deal="commitment">
+      <div class="name">Enterprise AI / ML commitment — FY2026<small>Single term minimum · multiple product discount groups</small></div>
+      <div><div class="bar"><i style="width:55%"></i><span class="target" style="left:75%"></span></div><div class="barMeta">55% of floor · behind pace by $23,700</div></div>
+      <div class="val"><b>$66,300</b> of $120,000</div><div class="exp">Dec 31, 2026</div><span class="dot"></span>
+    </button>
+    <button class="row" data-deal="volume">
+      <div class="name">Volume marginal discount<small>No annual minimum · product-family rates</small></div>
+      <div><div class="bar blue"><i style="width:44%"></i></div><div class="barMeta">Current band · next band at $120k</div></div>
+      <div class="val">Commitment floor · <b>15%</b></div><div class="exp">Dec 31, 2026</div><span class="dot"></span>
+    </button>
+  </section>
+
+  <div class="scenario"><span>Demo: preview scenario</span><button>On track</button><button class="on">At risk</button><button>Settled (behind)</button></div>
+
+  <section>
+    <div class="usageTop"><div><h2 class="sectionTitle">Inference usage history</h2><p class="sectionSub">Up to 50 recent events in this range · prices shown are illustrative</p></div><button class="btn">○ Export CSV</button></div>
+    <table class="usage">
+      <thead><tr><th>Date</th><th>User</th><th>Type</th><th>Model</th><th class="num">Tokens</th><th class="num">Cost</th></tr></thead>
+      <tbody>
+        <tr><td>Oct 01</td><td>research-app</td><td>Serverless inference</td><td>llama-3.3-70b</td><td class="num">1.8M</td><td class="num">$684.20</td></tr>
+        <tr><td>Oct 01</td><td>batch-worker</td><td>Dedicated inference</td><td>h200-pool-a</td><td class="num">Reserved</td><td class="num">$1,284.00</td></tr>
+        <tr><td>Sep 30</td><td>analytics</td><td>GPU droplet</td><td>MI325x</td><td class="num">24 hrs</td><td class="num">$736.50</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<div class="overlay"></div>
+<aside class="drawer">
+  <div class="drawerHead"><h2 class="drawerTitle" id="drawerTitle">Commitment deal</h2><button class="close" aria-label="Close">&times;</button></div>
+  <nav class="tabs"><button class="tab active" data-tab="overview">Overview</button><button class="tab" data-tab="products">Products</button></nav>
+  <div class="body">
+    <section class="panel active" id="commitment-overview">
+      <div class="status">
+        <div class="statusTop"><div><h3>You're falling behind</h3><p>Spend counted toward this agreement is $23,700 below where it would be today to finish the term at the $120,000 floor.</p></div><span class="badge warn">At risk</span></div>
+        <div class="label">Actual / floor</div><div class="big">$66,300 <span>/ $120,000</span></div>
+        <div class="wide"><i style="width:55%"></i><span class="pin" style="left:75%"></span></div>
+        <div class="scale"><span>$0</span><span>Target today <b>$90,000</b></span><span><b>$120,000</b> floor</span></div>
+      </div>
+      <div class="cards">
+        <div class="miniCard"><div class="k">Agreement structure</div><div class="v">One term minimum</div><div class="x">Eligible AI / ML and Core DO spend rolls up to the same $120,000 target.</div></div>
+        <div class="miniCard"><div class="k">Discount model</div><div class="v">Grouped rates</div><div class="x">Each product group has its own flat or marginal discount schedule.</div></div>
+        <div class="miniCard"><div class="k">If spend is short</div><div class="v">Attributed true-up</div><div class="x">Shortfalls are billed to the product group that created them, not blended.</div></div>
+      </div>
+      <h3 class="h2">Contract terms</h3>
+      <div class="terms">
+        <div><div class="termK">Account</div><div class="termV">Acme Robotics, Inc.</div></div><div><div class="termK">Term</div><div class="termV">Jan 1, 2026 – Dec 31, 2026</div></div>
+        <div><div class="termK">Time remaining</div><div class="termV">91 days left</div></div><div><div class="termK">Term spend minimum</div><div class="termV">$120,000</div></div>
+        <div><div class="termK">Structure</div><div class="termV">Multi-product commitment with grouped discounts</div></div><div><div class="termK">Account executive</div><div class="termV">Jane Doe</div></div>
+      </div>
+      <a class="link" href="#">↓ Download contract PDF</a>
+      <div class="note"><b>How to read this:</b> usage from eligible products counts toward the same floor even when products have different discount rates. Pre-payments can pay a shortfall, but they do not lower the $120,000 minimum.</div>
+    </section>
+
+    <section class="panel" id="commitment-products">
+      <p class="lede">How much you've spent and how much is left on each product group this cycle to reach your <b>$120,000</b> floor.</p>
+      <div class="metric"><div class="k">Left this term</div><div class="v">$53,700</div><div class="x">$66,300 spent · $120,000 commitment floor</div><div class="wide blue"><i style="width:55%"></i></div></div>
+      <h3 class="h2">Discount groups in this commitment</h3>
+      <table class="product">
+        <thead><tr><th>Product group</th><th>Discount method</th><th class="num">Spend counted</th><th class="num">Expected share</th><th>True-up billed as</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pname">AI / ML — Inference &amp; GPUs</span><span class="small">Serverless inference, dedicated inference, GPU droplets, reserved GPU capacity</span></td><td><span class="tag purple">Marginal tiers</span><span class="small">10% to $50k · 15% from $50k–$100k · 20% above $100k</span></td><td class="right">$61,200</td><td class="right">$100,000</td><td><span class="tag purple">AI / ML billing item</span></td></tr>
+          <tr><td><span class="pname">Core DO — Compute &amp; Storage</span><span class="small">Droplets, Spaces, Managed Databases, Load Balancers</span></td><td><span class="tag blueTag">Flat rate</span><span class="small">12% off eligible list spend</span></td><td class="right">$5,100</td><td class="right">$20,000</td><td><span class="tag blueTag">Core DO billing item</span></td></tr>
+          <tr><td><span class="pname">Total</span></td><td><span class="small">All groups consolidate toward one agreement floor</span></td><td class="right">$66,300</td><td class="right">$120,000</td><td><span class="tag amberTag">Separated by product group</span></td></tr>
+        </tbody>
+      </table>
+      <div class="note"><b>Marginal means non-retroactive:</b> higher rates apply only to spend inside that band. The 20% AI / ML rate starts after AI / ML net spend crosses $100,000; it does not re-price the first $100,000.</div>
+      <h3 class="h2">Eligible products and exclusions</h3>
+      <table class="product">
+        <thead><tr><th>Catalog selection</th><th>Included products</th><th>Excluded</th><th>Catalog behavior</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pname">AI / ML family</span><span class="small">Selected at product-family level</span></td><td><div class="chips"><span class="chip">GenAI Serverless Inference</span><span class="chip">Dedicated Inference</span><span class="chip">GPU Droplets</span><span class="chip">GPU Reservations</span></div></td><td><span class="chip excl">Bandwidth overage</span></td><td><span class="chip auto">New AI / ML SKUs auto-include</span></td></tr>
+          <tr><td><span class="pname">Core DO bundle</span><span class="small">Reusable saved grouping</span></td><td><div class="chips"><span class="chip">Droplets</span><span class="chip">Spaces</span><span class="chip">DBaaS</span><span class="chip">LBaaS</span><span class="chip">DOKS</span></div></td><td><span class="chip excl">GPU Droplets</span></td><td><span class="chip auto">Versioned catalog group</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel" id="volume-overview">
+      <div class="metric"><div class="k">Current tier</div><div class="v" style="font-size:30px">Commitment floor · 15%</div><div class="x">Net spend counted: $66,300 · No annual minimum</div><div class="wide blue"><i style="width:44%"></i></div><div class="scale"><span>$66,300</span><span><b>$150,000</b></span></div></div>
+      <div class="cards"><div class="miniCard"><div class="k">Agreement type</div><div class="v">Volume discount</div><div class="x">Rates are based on eligible net spend, without a committed minimum.</div></div><div class="miniCard"><div class="k">Rate behavior</div><div class="v">Marginal bands</div><div class="x">Each rate applies only to the spend in its band.</div></div><div class="miniCard"><div class="k">Current savings</div><div class="v" style="color:var(--green)">$11,700</div><div class="x">Based on eligible list spend this term.</div></div></div>
+      <h3 class="h2">Contract terms</h3><div class="terms"><div><div class="termK">Account</div><div class="termV">Acme Robotics, Inc.</div></div><div><div class="termK">Term</div><div class="termV">Jan 1, 2026 – Dec 31, 2026</div></div><div><div class="termK">Structure</div><div class="termV">Usage-based tiered discounts — no commitment floor</div></div><div><div class="termK">Account executive</div><div class="termV">Jane Doe</div></div></div>
+      <a class="link" href="#">↓ Download contract PDF</a>
+    </section>
+
+    <section class="panel" id="volume-products">
+      <p class="lede">Eligible product spend at your current <b>Commitment floor</b> rate. Rates increase automatically as eligible net spend crosses each band.</p>
+      <div class="metric" style="border-color:#b6efcf;background:#f7fffa"><div class="k" style="color:var(--green)">Your savings this term</div><div class="v" style="color:#1f6a51">$11,700</div><div class="x">15% off eligible usage · $78,000 list → <b>$66,300</b> net</div></div>
+      <table class="product">
+        <thead><tr><th>Product</th><th class="num">List spend</th><th class="num">Rate</th><th class="num">Saved</th><th class="num">Net spend</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pname">Droplet</span></td><td class="right">$13,000</td><td class="right">10%</td><td class="right" style="color:var(--green)">-$1,300</td><td class="right">$11,700</td></tr>
+          <tr><td><span class="pname">Volumes</span></td><td class="right">$6,500</td><td class="right">13%</td><td class="right" style="color:var(--green)">-$845</td><td class="right">$5,655</td></tr>
+          <tr><td><span class="pname">Spaces</span></td><td class="right">$6,500</td><td class="right">13%</td><td class="right" style="color:var(--green)">-$845</td><td class="right">$5,655</td></tr>
+          <tr><td><span class="pname">DBaaS</span></td><td class="right">$13,000</td><td class="right">10%</td><td class="right" style="color:var(--green)">-$1,300</td><td class="right">$11,700</td></tr>
+          <tr><td><span class="pname">DOKS</span></td><td class="right">$13,000</td><td class="right">10%</td><td class="right" style="color:var(--green)">-$1,300</td><td class="right">$11,700</td></tr>
+        </tbody>
+      </table>
+      <h3 class="h2">All volume tiers</h3>
+      <table class="product"><thead><tr><th>Tier</th><th>Example products</th><th class="num">Rate</th></tr></thead><tbody><tr><td><b>Current · $0–$120k</b></td><td>Droplet, Volumes, Spaces, DBaaS, LBaaS, DOKS</td><td class="right">15%</td></tr><tr><td><b>Tier 2 · $120k–$150k</b></td><td>Same catalog group, new SKUs auto-included</td><td class="right">20%</td></tr><tr><td><b>Tier 3 · $150k–$180k</b></td><td>Same catalog group, exclusions preserved</td><td class="right">25%</td></tr></tbody></table>
+    </section>
+  </div>
+  <div class="foot"><a href="#">Help &amp; resources ↗</a><a href="#">Contact our team ↗</a></div>
+</aside>
+
+<script>
+  const deals={
+    commitment:{title:'Commitment deal',overview:'commitment-overview',products:'commitment-products'},
+    volume:{title:'Volume discount 1',overview:'volume-overview',products:'volume-products'}
+  };
+  let currentDeal='commitment', currentTab='overview';
+  const drawer=document.querySelector('.drawer'), overlay=document.querySelector('.overlay'), title=document.getElementById('drawerTitle');
+  const rows=document.querySelectorAll('[data-deal]'), tabs=document.querySelectorAll('[data-tab]'), panels=document.querySelectorAll('.panel');
+  function render(){
+    const d=deals[currentDeal];
+    title.textContent=d.title;
+    rows.forEach(r=>r.classList.toggle('active',r.dataset.deal===currentDeal));
+    tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===currentTab));
+    panels.forEach(p=>p.classList.toggle('active',p.id===d[currentTab]));
+    drawer.classList.remove('hidden');overlay.classList.remove('hidden');
+  }
+  rows.forEach(r=>r.addEventListener('click',()=>{currentDeal=r.dataset.deal;currentTab='overview';render()}));
+  tabs.forEach(t=>t.addEventListener('click',()=>{currentTab=t.dataset.tab;render()}));
+  document.querySelector('.close').addEventListener('click',()=>{drawer.classList.add('hidden');overlay.classList.add('hidden');rows.forEach(r=>r.classList.remove('active'))});
+  overlay.addEventListener('click',()=>document.querySelector('.close').click());
+</script>
+</body>
+</html>

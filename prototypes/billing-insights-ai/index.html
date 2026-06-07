@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Billing Insights — discount agreements</title>
+<style>
+  :root{
+    --ink:#031b4e;
+    --text:#24324a;
+    --soft:#53627c;
+    --muted:#7c8aa1;
+    --muted-2:#a6b0c1;
+    --line:#e3e8f1;
+    --line-soft:#eef2f7;
+    --bg:#f7f9fc;
+    --card:#ffffff;
+    --blue:#0069ff;
+    --blue-2:#2d7cff;
+    --blue-soft:#eaf2ff;
+    --green:#18795b;
+    --green-soft:#eefaf4;
+    --amber:#f5a623;
+    --amber-deep:#9a5b16;
+    --amber-soft:#fff8e7;
+    --purple:#6457e8;
+    --purple-soft:#f1efff;
+    --red:#d14343;
+    --track:#edf1f7;
+    --shadow:0 1px 2px rgba(16,24,40,.05);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Inter",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  button{font:inherit;}
+
+  .page{max-width:1140px;margin:0 auto;padding:28px 24px 80px;}
+  .eyebrow{
+    color:var(--muted-2);font-size:10px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;margin:0 0 10px;
+  }
+  h1{font-size:24px;line-height:1.2;color:var(--ink);letter-spacing:-.03em;margin:0 0 6px;}
+  .lede{font-size:13px;color:var(--soft);margin:0 0 22px;max-width:720px;line-height:1.45;}
+
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .card-head{padding:17px 18px 13px;border-bottom:1px solid var(--line-soft);}
+  .card-title{font-size:15px;font-weight:800;color:var(--ink);margin:0;letter-spacing:-.01em;}
+  .card-sub{font-size:11px;color:var(--muted);margin:4px 0 0;}
+
+  .deals-head,.deal-row{
+    display:grid;grid-template-columns:1.75fr 1.35fr 1.45fr .88fr 22px;
+    gap:16px;align-items:center;
+  }
+  .deals-head{
+    padding:10px 18px 9px;background:#fbfcfe;color:var(--muted-2);
+    font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .deal-row{
+    width:100%;border:0;background:#fff;text-align:left;padding:15px 18px;
+    border-bottom:1px solid var(--line-soft);cursor:pointer;color:inherit;
+  }
+  .deal-row:hover,.deal-row.active{background:#fbfdff;}
+  .deal-row:last-child{border-bottom:0;}
+  .deal-name{font-size:13px;font-weight:800;color:var(--text);letter-spacing:-.01em;}
+  .deal-name small{display:block;color:var(--muted);font-size:11px;font-weight:600;margin-top:3px;}
+  .deal-val{font-size:12.5px;color:var(--soft);font-variant-numeric:tabular-nums;}
+  .deal-val b{font-weight:800;color:var(--text);}
+  .deal-exp{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;}
+  .select-dot{
+    width:13px;height:13px;border:1.5px solid #b8c4d7;border-radius:50%;justify-self:end;
+    display:inline-flex;align-items:center;justify-content:center;
+  }
+  .deal-row.active .select-dot{border-color:var(--blue);}
+  .deal-row.active .select-dot:after{content:"";width:5px;height:5px;border-radius:50%;background:var(--blue);}
+
+  .bar{height:7px;border-radius:999px;background:var(--track);position:relative;overflow:hidden;}
+  .bar > i{display:block;height:100%;border-radius:999px;}
+  .bar.amber > i{background:var(--amber);}
+  .bar.blue > i{background:linear-gradient(90deg,var(--blue),#6c63ff);}
+  .bar.green > i{background:var(--green);}
+  .bar-meta{font-size:10.5px;color:var(--muted);margin-top:5px;}
+  .target{position:absolute;top:-3px;bottom:-3px;width:2px;border-radius:1px;background:#c56d2c;}
+
+  .scenario{display:flex;gap:0;margin:24px 0 22px;}
+  .scenario-label{
+    align-self:center;margin-right:12px;color:var(--muted-2);font-size:10px;font-weight:800;
+    text-transform:uppercase;letter-spacing:.07em;
+  }
+  .pill-toggle{border:1px solid var(--line);background:#fff;color:var(--muted);font-size:12px;font-weight:700;padding:9px 16px;}
+  .pill-toggle:first-of-type{border-radius:8px 0 0 8px;}
+  .pill-toggle:last-of-type{border-radius:0 8px 8px 0;}
+  .pill-toggle.on{background:#f1f5ff;color:var(--ink);box-shadow:inset 0 -2px 0 var(--blue);}
+
+  .usage-top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px;}
+  .section-title{font-size:15px;font-weight:800;color:var(--text);margin:0 0 4px;}
+  .section-sub{font-size:11px;color:var(--muted);margin:0;}
+  .outline-btn{
+    border:1px solid #ccd5e3;background:#fff;border-radius:6px;color:#2e3b52;
+    padding:7px 11px;font-size:12px;font-weight:700;cursor:pointer;
+  }
+  .usage-table{width:100%;border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid var(--line);border-radius:10px;background:#fff;}
+  .usage-table th{
+    background:#fbfcfe;color:var(--muted-2);font-size:10px;font-weight:800;letter-spacing:.06em;
+    text-transform:uppercase;text-align:left;padding:12px 14px;border-bottom:1px solid var(--line-soft);
+  }
+  .usage-table td{font-size:12px;color:var(--text);padding:13px 14px;border-bottom:1px solid var(--line-soft);}
+  .usage-table tr:last-child td{border-bottom:0;}
+  .num{text-align:right;font-variant-numeric:tabular-nums;}
+
+  .overlay{position:fixed;inset:0;background:rgba(3,27,78,.08);z-index:10;}
+  .drawer{
+    position:fixed;top:0;right:0;width:min(960px,100vw);height:100vh;z-index:11;background:#fff;
+    box-shadow:-10px 0 30px rgba(3,27,78,.14);display:flex;flex-direction:column;border-left:1px solid var(--line);
+  }
+  .drawer-head{
+    height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 26px 0 28px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .drawer-title{font-size:27px;font-weight:800;letter-spacing:-.04em;color:var(--ink);margin:0;}
+  .close{
+    border:0;background:transparent;color:#9aa7bb;font-size:36px;line-height:1;cursor:pointer;padding:4px 0 6px 16px;
+  }
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--line-soft);padding:0 24px;}
+  .tab{
+    border:0;background:#fff;color:#6b7890;font-size:20px;font-weight:800;padding:20px 18px 17px;
+    border-bottom:3px solid transparent;cursor:pointer;
+  }
+  .tab.active{color:var(--ink);border-bottom-color:var(--blue);}
+  .drawer-body{overflow:auto;padding:22px 24px 96px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .status-card{
+    border:1px solid #ffd978;background:#fffdf7;border-radius:10px;padding:22px 22px 24px;margin-bottom:24px;
+  }
+  .status-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
+  .status-title{font-size:26px;font-weight:800;color:var(--ink);letter-spacing:-.03em;margin:0 0 10px;}
+  .status-copy{font-size:14px;line-height:1.45;color:var(--amber-deep);margin:0;max-width:680px;}
+  .badge{
+    display:inline-flex;align-items:center;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:800;
+    white-space:nowrap;text-transform:uppercase;letter-spacing:.02em;
+  }
+  .badge.warn{border:1px solid #f7cf5b;background:#fff9e8;color:#9a5b16;}
+  .badge.ok{background:var(--green-soft);color:var(--green);}
+  .badge.info{background:var(--blue-soft);color:#1754b8;}
+  .big-label{font-size:12px;font-weight:800;letter-spacing:.08em;color:#7a8aa5;text-transform:uppercase;margin:24px 0 8px;}
+  .big-number{font-size:34px;font-weight:800;color:var(--ink);letter-spacing:-.04em;font-variant-numeric:tabular-nums;}
+  .big-number .muted{color:#8d98aa;font-weight:700;}
+  .wide-bar{height:13px;border-radius:999px;background:var(--track);position:relative;margin:18px 0 10px;}
+  .wide-bar .fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--amber);}
+  .wide-bar.blue .fill{background:var(--blue);}
+  .wide-bar.purple .fill{background:linear-gradient(90deg,var(--purple),#7d74ff);}
+  .wide-bar .pin{position:absolute;top:-7px;width:2px;height:27px;background:#c56d2c;border-radius:2px;}
+  .scale{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;}
+  .scale b{color:var(--text);}
+
+  .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0 28px;}
+  .summary-card{border:1px solid var(--line);border-radius:10px;background:#fff;padding:16px;}
+  .summary-card .k{font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--muted-2);text-transform:uppercase;margin-bottom:7px;}
+  .summary-card .v{font-size:18px;font-weight:800;color:var(--ink);letter-spacing:-.02em;}
+  .summary-card .x{font-size:12px;color:var(--soft);line-height:1.45;margin-top:7px;}
+
+  .h2{font-size:20px;font-weight:800;color:var(--text);margin:28px 0 14px;letter-spacing:-.02em;}
+  .terms{display:grid;grid-template-columns:1fr 1fr;row-gap:18px;column-gap:42px;margin-bottom:28px;}
+  .term-k{font-size:17px;color:#9ba8bc;margin-bottom:4px;}
+  .term-v{font-size:20px;font-weight:700;color:var(--text);line-height:1.3;}
+  .link{display:inline-flex;gap:10px;align-items:center;color:var(--blue);font-weight:800;font-size:18px;text-decoration:none;margin-top:4px;}
+
+  .explain{border:1px solid #d7e5ff;background:#f5f9ff;border-radius:10px;padding:14px 16px;color:#33455e;font-size:13px;line-height:1.55;margin:14px 0 22px;}
+  .explain b{color:var(--ink);}
+
+  .metric-card{border:1px solid var(--line);border-radius:10px;background:#fff;padding:20px 22px;margin-bottom:20px;}
+  .metric-eyebrow{font-size:14px;font-weight:800;color:#7f8da4;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;}
+  .metric-main{font-size:38px;font-weight:800;color:var(--ink);letter-spacing:-.05em;margin-bottom:8px;font-variant-numeric:tabular-nums;}
+  .metric-sub{font-size:20px;color:var(--soft);line-height:1.35;}
+  .metric-sub b{color:var(--text);}
+
+  .product-table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;margin:14px 0 22px;}
+  .product-table th{
+    background:#fbfcfe;color:#9aa6ba;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+    text-align:left;padding:14px 16px;border-bottom:1px solid var(--line-soft);
+  }
+  .product-table td{padding:14px 16px;border-bottom:1px solid var(--line-soft);font-size:14px;color:var(--text);vertical-align:top;}
+  .product-table tr:last-child td{border-bottom:0;}
+  .product-table .name{font-weight:800;color:var(--text);}
+  .product-table .small{display:block;color:var(--muted);font-size:11.5px;margin-top:4px;line-height:1.35;}
+  .product-table .right{text-align:right;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;}
+  .mini-bar{height:8px;border-radius:999px;background:var(--track);overflow:hidden;margin-top:8px;max-width:220px;}
+  .mini-bar i{display:block;height:100%;border-radius:999px;background:var(--blue);}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;}
+  .chip{font-size:12px;font-weight:700;color:#40506a;background:#f3f6fa;border:1px solid var(--line);border-radius:6px;padding:5px 9px;}
+  .chip.excl{color:#955f14;background:#fff6e5;border-color:#f4ddad;text-decoration:line-through;text-decoration-color:#ba7a25;}
+  .chip.auto{color:#1754b8;background:var(--blue-soft);border-color:#cfe0ff;}
+  .tag{display:inline-flex;align-items:center;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:800;}
+  .tag.purple{background:var(--purple-soft);color:#574bd2;}
+  .tag.blue{background:var(--blue-soft);color:#1754b8;}
+  .tag.green{background:var(--green-soft);color:var(--green);}
+  .tag.amber{background:var(--amber-soft);color:var(--amber-deep);}
+
+  .tier-card{border:1px solid var(--line);border-radius:10px;background:#fff;margin:12px 0;overflow:hidden;}
+  .tier-card.current{border-color:#9bbdff;box-shadow:0 0 0 1px #dbe7ff inset;}
+  .tier-head{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;font-size:15px;font-weight:800;color:var(--text);}
+  .tier-head .rate{font-size:20px;color:var(--ink);}
+  .ladder{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-top:12px;}
+  .seg{padding:12px 14px;border-right:1px solid var(--line);background:#f7f9fc;}
+  .seg:last-child{border-right:0;}
+  .seg.done{background:#eef4ff;}
+  .seg.active{background:var(--blue);color:#fff;}
+  .seg .rate{font-size:17px;font-weight:900;}
+  .seg .range{font-size:11px;font-weight:700;margin-top:4px;opacity:.85;}
+
+  .drawer-foot{
+    position:absolute;left:0;right:0;bottom:0;height:58px;background:#fbfcfe;border-top:1px solid var(--line-soft);
+    display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+  }
+  .foot-link{color:var(--blue);text-decoration:none;font-weight:800;font-size:16px;}
+  .foot-link.secondary{color:#4c5a70;}
+
+  .hidden{display:none;}
+
+  @media (max-width:760px){
+    .page{padding:18px 12px 70px;}
+    .deals-head{display:none;}
+    .deal-row{grid-template-columns:1fr;gap:10px;}
+    .deal-exp{text-align:left;}
+    .select-dot{display:none;}
+    .drawer{width:100vw;}
+    .drawer-title{font-size:22px;}
+    .tab{font-size:17px;padding-left:12px;padding-right:12px;}
+    .summary-grid,.terms{grid-template-columns:1fr;}
+    .product-table{font-size:12px;}
+  }
+</style>
+</head>
+<body>
+  <main class="page" aria-hidden="false">
+    <p class="eyebrow">Billing insights</p>
+    <h1>Discounts and commitments</h1>
+    <p class="lede">Track how your active agreements apply to eligible usage, which product groups count toward your minimum, and where any shortfall would be billed.</p>
+
+    <section class="card" aria-label="Commitment and volume deals">
+      <div class="card-head">
+        <h2 class="card-title">Commitment &amp; volume deals</h2>
+        <p class="card-sub">Active agreements on your account · select a row for details</p>
+      </div>
+
+      <div class="deals-head">
+        <div>Deal name</div>
+        <div>Pacing</div>
+        <div>Spend / tier</div>
+        <div>Expires</div>
+        <div></div>
+      </div>
+
+      <button class="deal-row active" type="button" data-deal="commitment">
+        <div class="deal-name">Enterprise AI / ML commitment — FY2026<small>Single term minimum · multiple product discount groups</small></div>
+        <div>
+          <div class="bar amber"><i style="width:55%"></i><span class="target" style="left:75%"></span></div>
+          <div class="bar-meta">55% of floor · behind pace by $23,700</div>
+        </div>
+        <div class="deal-val"><b>$66,300</b> of $120,000</div>
+        <div class="deal-exp">Dec 31, 2026</div>
+        <span class="select-dot" aria-hidden="true"></span>
+      </button>
+
+      <button class="deal-row" type="button" data-deal="volume">
+        <div class="deal-name">Volume marginal discount<small>No annual minimum · product-family rates</small></div>
+        <div>
+          <div class="bar blue"><i style="width:44%"></i></div>
+          <div class="bar-meta">Current band · next band at $120k</div>
+        </div>
+        <div class="deal-val">Commitment floor · <b>15%</b></div>
+        <div class="deal-exp">Dec 31, 2026</div>
+        <span class="select-dot" aria-hidden="true"></span>
+      </button>
+    </section>
+
+    <div class="scenario">
+      <span class="scenario-label">Demo: preview scenario</span>
+      <button class="pill-toggle">On track</button>
+      <button class="pill-toggle on">At risk</button>
+      <button class="pill-toggle">Settled (behind)</button>
+    </div>
+
+    <section>
+      <div class="usage-top">
+        <div>
+          <h2 class="section-title">Inference usage history</h2>
+          <p class="section-sub">Up to 50 recent events in this range · prices shown are illustrative</p>
+        </div>
+        <button class="outline-btn" type="button">○ Export CSV</button>
+      </div>
+
+      <table class="usage-table">
+        <thead>
+          <tr><th>Date</th><th>User</th><th>Type</th><th>Model</th><th class="num">Tokens</th><th class="num">Cost</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Oct 01</td><td>research-app</td><td>Serverless inference</td><td>llama-3.3-70b</td><td class="num">1.8M</td><td class="num">$684.20</td></tr>
+          <tr><td>Oct 01</td><td>batch-worker</td><td>Dedicated inference</td><td>h200-pool-a</td><td class="num">Reserved</td><td class="num">$1,284.00</td></tr>
+          <tr><td>Sep 30</td><td>analytics</td><td>GPU droplet</td><td>MI325x</td><td class="num">24 hrs</td><td class="num">$736.50</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <div class="overlay" data-close></div>
+  <aside class="drawer" aria-label="Agreement details">
+    <div class="drawer-head">
+      <h2 class="drawer-title" data-title>Commitment deal</h2>
+      <button class="close" type="button" aria-label="Close details" data-close>&times;</button>
+    </div>
+    <nav class="tabs" aria-label="Agreement detail tabs">
+      <button class="tab active" type="button" data-tab="overview">Overview</button>
+      <button class="tab" type="button" data-tab="products">Products</button>
+    </nav>
+
+    <div class="drawer-body">
+      <section class="panel active" data-panel="commitment-overview">
+        <div class="status-card">
+          <div class="status-top">
+            <div>
+              <h3 class="status-title">You&apos;re falling behind</h3>
+              <p class="status-copy">Spend counted toward this agreement is $23,700 below where it would be today to finish the term at the $120,000 floor.</p>
+            </div>
+            <span class="badge warn">At risk</span>
+          </div>
+          <div class="big-label">Actual / floor</div>
+          <div class="big-number">$66,300 <span class="muted">/ $120,000</span></div>
+          <div class="wide-bar">
+            <span class="fill" style="width:55%"></span>
+            <span class="pin" style="left:75%" title="Target today"></span>
+          </div>
+          <div class="scale"><span>$0</span><span>Target today <b>$90,000</b></span><span><b>$120,000</b> floor</span></div>
+        </div>
+
+        <div class="summary-grid" aria-label="Agreement summary">
+          <div class="summary-card">
+            <div class="k">Agreement structure</div>
+            <div class="v">One term minimum</div>
+            <div class="x">Eligible AI / ML and Core DO spend rolls up to the same $120,000 target.</div>
+          </div>
+          <div class="summary-card">
+            <div class="k">Discount model</div>
+            <div class="v">Grouped rates</div>
+            <div class="x">Each product group has its own flat or marginal discount schedule.</div>
+          </div>
+          <div class="summary-card">
+            <div class="k">If spend is short</div>
+            <div class="v">Attributed true-up</div>
+            <div class="x">Any shortfall is billed to the product group that created it, not blended.</div>
+          </div>
+        </div>
+
+        <h3 class="h2">Contract terms</h3>
+        <div class="terms">
+          <div><div class="term-k">Account</div><div class="term-v">Acme Robotics, Inc.</div></div>
+          <div><div class="term-k">Term</div><div class="term-v">Jan 1, 2026 – Dec 31, 2026</div></div>
+          <div><div class="term-k">Time remaining</div><div class="term-v">91 days left</div></div>
+          <div><div class="term-k">Term spend minimum</div><div class="term-v">$120,000</div></div>
+          <div><div class="term-k">Structure</div><div class="term-v">Multi-product commitment with grouped discounts</div></div>
+          <div><div class="term-k">Account executive</div><div class="term-v">Jane Doe</div></div>
+        </div>
+        <a class="link" href="#">↓ Download contract PDF</a>
+
+        <div class="explain">
+          <b>How to read this:</b> usage from eligible products counts toward the same floor even when products have different discount rates. Pre-payments can pay a shortfall, but they do not lower the $120,000 minimum.
+        </div>
+      </section>
+
+      <section class="panel" data-panel="commitment-products">
+        <p class="lede" style="margin-bottom:20px;">How much you&apos;ve spent and how much is left on each product group this cycle to reach your <b>$120,000</b> floor.</p>
+
+        <div class="metric-card">
+          <div class="metric-eyebrow">Left this term</div>
+          <div class="metric-main">$53,700</div>
+          <div class="metric-sub">$66,300 spent · $120,000 commitment floor</div>
+          <div class="wide-bar blue"><span class="fill" style="width:55%"></span></div>
+        </div>
+
+        <h3 class="h2">Discount groups in this commitment</h3>
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th>Product group</th>
+              <th>Discount method</th>
+              <th class="num">Spend counted</th>
+              <th class="num">Expected share</th>
+              <th>True-up billed as</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="name">AI / ML — Inference &amp; GPUs</span><span class="small">Serverless inference, dedicated inference, GPU droplets, reserved GPU capacity</span></td>
+              <td><span class="tag purple">Marginal tiers</span><span class="small">10% to $50k · 15% from $50k–$100k · 20% above $100k</span></td>
+              <td class="right">$61,200</td>
+              <td class="right">$100,000</td>
+              <td><span class="tag purple">AI / ML billing item</span></td>
+            </tr>
+            <tr>
+              <td><span class="name">Core DO — Compute &amp; Storage</span><span class="small">Droplets, Spaces, Managed Databases, Load Balancers</span></td>
+              <td><span class="tag blue">Flat rate</span><span class="small">12% off eligible list spend</span></td>
+              <td class="right">$5,100</td>
+              <td class="right">$20,000</td>
+              <td><span class="tag blue">Core DO billing item</span></td>
+            </tr>
+            <tr>
+              <td><span class="name">Total</span></td>
+              <td><span class="small">All groups consolidate toward one agreement floor</span></td>
+              <td class="right">$66,300</td>
+              <td class="right">$120,000</td>
+              <td><span class="tag amber">Separated by product group</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="explain">
+          <b>Marginal means non-retroactive:</b> higher rates apply only to spend inside that band. For example, the 20% AI / ML rate starts after AI / ML net spend crosses $100,000; it does not re-price the first $100,000.
+        </div>
+
+        <h3 class="h2">Eligible products and exclusions</h3>
+        <table class="product-table">
+          <thead>
+            <tr><th>Catalog selection</th><th>Included products</th><th>Excluded</th><th>Catalog behavior</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="name">AI / ML family</span><span class="small">Selected at product-family level</span></td>
+              <td>
+                <div class="chips"><span class="chip">GenAI Serverless Inference</span><span class="chip">Dedicated Inference</span><span class="chip">GPU Droplets</span><span class="chip">GPU Reservations</span></div>
+              </td>
+              <td><span class="chip excl">Bandwidth overage</span></td>
+              <td><span class="chip auto">New AI / ML SKUs auto-include</span></td>
+            </tr>
+            <tr>
+              <td><span class="name">Core DO bundle</span><span class="small">Reusable saved grouping</span></td>
+              <td>
+                <div class="chips"><span class="chip">Droplets</span><span class="chip">Spaces</span><span class="chip">DBaaS</span><span class="chip">LBaaS</span><span class="chip">DOKS</span></div>
+              </td>
+              <td><span class="chip excl">GPU Droplets</span></td>
+              <td><span class="chip auto">Versioned catalog group</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 class="h2">Per-product tracking</h3>
+        <table class="product-table">
+          <thead>
+            <tr><th>Product</th><th class="num">Spent</th><th class="num">Left to spend</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="name">Serverless Inference</span><div class="mini-bar"><i style="width:64%"></i></div></td><td class="right">$24,800</td><td class="right">$14,200</td></tr>
+            <tr><td><span class="name">Dedicated Inference</span><div class="mini-bar"><i style="width:58%"></i></div></td><td class="right">$18,400</td><td class="right">$13,100</td></tr>
+            <tr><td><span class="name">GPU Reservations</span><div class="mini-bar"><i style="width:52%"></i></div></td><td class="right">$18,000</td><td class="right">$11,500</td></tr>
+            <tr><td><span class="name">Core DO products</span><div class="mini-bar"><i style="width:26%"></i></div></td><td class="right">$5,100</td><td class="right">$14,900</td></tr>
+            <tr><td><span class="name">Total</span></td><td class="right">$66,300</td><td class="right">$53,700</td></tr>
+          </tbody>
+        </table>
+
+        <div class="explain">
+          SKU-level discount and credit detail is available in the FOCUS-standard CSV export. The invoice remains summarized, while the export shows list spend, discount, credit, net spend, and catalog group for each SKU.
+        </div>
+      </section>
+
+      <section class="panel" data-panel="volume-overview">
+        <div class="metric-card">
+          <div class="metric-eyebrow">Current tier</div>
+          <div class="metric-main" style="font-size:30px;">Commitment floor · 15%</div>
+          <div class="metric-sub">Net spend counted: $66,300 · No annual minimum</div>
+          <div class="wide-bar purple"><span class="fill" style="width:44%"></span></div>
+          <div class="scale"><span>$66,300</span><span><b>$150,000</b></span></div>
+          <p class="metric-sub" style="font-size:20px;margin:14px 0 0;">Next rate band begins after <b>$83,700</b> more eligible net spend ($120k–$150k band).</p>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="k">Agreement type</div>
+            <div class="v">Volume discount</div>
+            <div class="x">Rates are based on eligible net spend, without a committed minimum.</div>
+          </div>
+          <div class="summary-card">
+            <div class="k">Rate behavior</div>
+            <div class="v">Marginal bands</div>
+            <div class="x">Each rate applies only to the spend in its band.</div>
+          </div>
+          <div class="summary-card">
+            <div class="k">Current savings</div>
+            <div class="v" style="color:var(--green);">$11,700</div>
+            <div class="x">Based on eligible list spend this term.</div>
+          </div>
+        </div>
+
+        <h3 class="h2">Contract terms</h3>
+        <div class="terms">
+          <div><div class="term-k">Account</div><div class="term-v">Acme Robotics, Inc.</div></div>
+          <div><div class="term-k">Term</div><div class="term-v">Jan 1, 2026 – Dec 31, 2026</div></div>
+          <div><div class="term-k">Structure</div><div class="term-v">Usage-based tiered discounts — no commitment floor</div></div>
+          <div><div class="term-k">Account executive</div><div class="term-v">Jane Doe</div></div>
+        </div>
+        <a class="link" href="#">↓ Download contract PDF</a>
+      </section>
+
+      <section class="panel" data-panel="volume-products">
+        <p class="lede" style="margin-bottom:20px;">Eligible product spend at your current <b>Commitment floor</b> rate. Rates increase automatically as eligible net spend crosses each band.</p>
+
+        <div class="metric-card" style="border-color:#b6efcf;background:#f7fffa;">
+          <div class="metric-eyebrow" style="color:var(--green);">Your savings this term</div>
+          <div class="metric-main" style="color:#1f6a51;">$11,700</div>
+          <div class="metric-sub">15% off eligible usage · $78,000 list → <b>$66,300</b> net</div>
+        </div>
+
+        <table class="product-table">
+          <thead><tr><th>Product</th><th class="num">List spend</th><th class="num">Rate</th><th class="num">Saved</th><th class="num">Net spend</th></tr></thead>
+          <tbody>
+            <tr><td><span class="name">Droplet</span></td><td class="right">$13,000</td><td class="right">10%</td><td class="right" style="color:var(--green);">-$1,300</td><td class="right">$11,700</td></tr>
+            <tr><td><span class="name">Volumes</span></td><td class="right">$6,500</td><td class="right">13%</td><td class="right" style="color:var(--green);">-$845</td><td class="right">$5,655</td></tr>
+            <tr><td><span class="name">Spaces</span></td><td class="right">$6,500</td><td class="right">13%</td><td class="right" style="color:var(--green);">-$845</td><td class="right">$5,655</td></tr>
+            <tr><td><span class="name">DBaaS</span></td><td class="right">$13,000</td><td class="right">10%</td><td class="right" style="color:var(--green);">-$1,300</td><td class="right">$11,700</td></tr>
+            <tr><td><span class="name">LBaaS</span></td><td class="right">$6,500</td><td class="right">13%</td><td class="right" style="color:var(--green);">-$845</td><td class="right">$5,655</td></tr>
+            <tr><td><span class="name">DOKS</span></td><td class="right">$13,000</td><td class="right">10%</td><td class="right" style="color:var(--green);">-$1,300</td><td class="right">$11,700</td></tr>
+          </tbody>
+        </table>
+
+        <h3 class="h2">All volume tiers</h3>
+        <p class="section-sub" style="font-size:14px;margin-top:-8px;">The highlighted tier is where your eligible net spend is today.</p>
+
+        <div class="tier-card current">
+          <div class="tier-head"><span>Commitment floor · $0–$120k</span><span class="rate">15%</span></div>
+          <table class="product-table" style="border:0;border-radius:0;margin:0;">
+            <tbody>
+              <tr><td><span class="name">Droplet <span class="tag blue">Anchor</span></span></td><td class="right">10%</td></tr>
+              <tr><td><span class="name">Volumes</span></td><td class="right">13%</td></tr>
+              <tr><td><span class="name">Spaces</span></td><td class="right">13%</td></tr>
+              <tr><td><span class="name">DBaaS <span class="tag blue">Anchor</span></span></td><td class="right">10%</td></tr>
+              <tr><td><span class="name">LBaaS</span></td><td class="right">13%</td></tr>
+              <tr><td><span class="name">DOKS <span class="tag blue">Anchor</span></span></td><td class="right">10%</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tier-card">
+          <div class="tier-head"><span>Tier 2 · $120k–$150k</span><span class="rate">20%</span></div>
+          <table class="product-table" style="border:0;border-radius:0;margin:0;">
+            <tbody>
+              <tr><td><span class="name">Droplet <span class="tag blue">Anchor</span></span></td><td class="right">18%</td></tr>
+              <tr><td><span class="name">Volumes</span></td><td class="right">21%</td></tr>
+              <tr><td><span class="name">Spaces</span></td><td class="right">21%</td></tr>
+              <tr><td><span class="name">DBaaS <span class="tag blue">Anchor</span></span></td><td class="right">18%</td></tr>
+              <tr><td><span class="name">DOKS <span class="tag blue">Anchor</span></span></td><td class="right">18%</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="tier-card">
+          <div class="tier-head"><span>Tier 3 · $150k–$180k</span><span class="rate">25%</span></div>
+          <table class="product-table" style="border:0;border-radius:0;margin:0;">
+            <tbody>
+              <tr><td><span class="name">Droplet <span class="tag blue">Anchor</span></span></td><td class="right">22%</td></tr>
+              <tr><td><span class="name">Volumes</span></td><td class="right">25%</td></tr>
+              <tr><td><span class="name">Spaces</span></td><td class="right">25%</td></tr>
+              <tr><td><span class="name">DBaaS <span class="tag blue">Anchor</span></span></td><td class="right">22%</td></tr>
+              <tr><td><span class="name">LBaaS</span></td><td class="right">25%</td></tr>
+              <tr><td><span class="name">DOKS <span class="tag blue">Anchor</span></span></td><td class="right">22%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div class="drawer-foot">
+      <a class="foot-link" href="#">Help &amp; resources ↗</a>
+      <a class="foot-link secondary" href="#">Contact our team ↗</a>
+    </div>
+  </aside>
+
+<script>
+  const deals = {
+    commitment: {
+      title: 'Commitment deal',
+      overview: 'commitment-overview',
+      products: 'commitment-products'
+    },
+    volume: {
+      title: 'Volume discount 1',
+      overview: 'volume-overview',
+      products: 'volume-products'
+    }
+  };
+
+  let currentDeal = 'commitment';
+  let currentTab = 'overview';
+
+  const drawer = document.querySelector('.drawer');
+  const overlay = document.querySelector('.overlay');
+  const title = document.querySelector('[data-title]');
+  const dealRows = document.querySelectorAll('[data-deal]');
+  const tabButtons = document.querySelectorAll('[data-tab]');
+  const panels = document.querySelectorAll('[data-panel]');
+
+  function showDrawer() {
+    drawer.classList.remove('hidden');
+    overlay.classList.remove('hidden');
+  }
+
+  function render() {
+    const deal = deals[currentDeal];
+    title.textContent = deal.title;
+    dealRows.forEach(row => row.classList.toggle('active', row.dataset.deal === currentDeal));
+    tabButtons.forEach(tab => tab.classList.toggle('active', tab.dataset.tab === currentTab));
+    panels.forEach(panel => panel.classList.toggle('active', panel.dataset.panel === deal[currentTab]));
+    showDrawer();
+  }
+
+  dealRows.forEach(row => {
+    row.addEventListener('click', () => {
+      currentDeal = row.dataset.deal;
+      currentTab = 'overview';
+      render();
+    });
+  });
+
+  tabButtons.forEach(tab => {
+    tab.addEventListener('click', () => {
+      currentTab = tab.dataset.tab;
+      render();
+    });
+  });
+
+  document.querySelectorAll('[data-close]').forEach(control => {
+    control.addEventListener('click', () => {
+      drawer.classList.add('hidden');
+      overlay.classList.add('hidden');
+      dealRows.forEach(row => row.classList.remove('active'));
+    });
+  });
+</script>
+</body>
+</html>
