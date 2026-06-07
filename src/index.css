@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@theme {
+  /* DigitalOcean Primary Blues */
+  --color-do-blue-50: #e6f0ff;
+  --color-do-blue-100: #cce0ff;
+  --color-do-blue-200: #99c2ff;
+  --color-do-blue-300: #66a3ff;
+  --color-do-blue-400: #3385ff;
+  --color-do-blue-500: #0069ff;
+  --color-do-blue-600: #0054cc;
+  --color-do-blue-700: #003f99;
+  --color-do-blue-800: #002a66;
+  --color-do-blue-900: #001533;
+
+  /* DigitalOcean Grays */
+  --color-do-gray-50: #f5f7fa;
+  --color-do-gray-100: #ebeef2;
+  --color-do-gray-200: #d5dae1;
+  --color-do-gray-300: #b3bac5;
+  --color-do-gray-400: #8c95a4;
+  --color-do-gray-500: #6b7689;
+  --color-do-gray-600: #4e5d78;
+  --color-do-gray-700: #3d4f6f;
+  --color-do-gray-800: #2c3e6b;
+  --color-do-gray-900: #1a2744;
+
+  /* DigitalOcean Status Colors */
+  --color-do-green-50: #e8f9ee;
+  --color-do-green-500: #15cd72;
+  --color-do-green-600: #0db162;
+  --color-do-yellow-50: #fff8e6;
+  --color-do-yellow-400: #ffc940;
+  --color-do-yellow-500: #f2b600;
+  --color-do-red-50: #fff0f0;
+  --color-do-red-500: #e03e2d;
+  --color-do-red-600: #cc3525;
+  --color-do-red-700: #b22d1f;
+
+  /* DigitalOcean Navy (sidebar/dark elements) */
+  --color-do-navy: #031b4e;
+  --color-do-navy-light: #0d2966;
+
+  /* Background & Surface */
+  --color-do-bg: #f5f7fa;
+  --color-do-surface: #ffffff;
+  --color-do-border: #d5dae1;
+
+  /* Font family */
+  --font-do: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Font sizes */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-base: 0.875rem;
+  --font-size-lg: 1rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* Shadows (DigitalOcean style) */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 10px 40px rgba(0, 0, 0, 0.2);
+  --shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+@layer base {
+  body {
+    font-family: var(--font-do);
+    background-color: var(--color-do-bg);
+    color: var(--color-do-gray-900);
+    font-size: var(--font-size-base);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
