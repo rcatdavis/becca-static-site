@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Commitment & volume deals — detail</title>
+<style>
+  :root{
+    --ink:#1b2733;
+    --ink-soft:#41505f;
+    --muted:#8a94a6;
+    --muted-2:#aab2c0;
+    --line:#e6e9ef;
+    --line-soft:#eef1f6;
+    --bg:#f4f6f9;
+    --card:#ffffff;
+    --blue:#0066ff;
+    --blue-soft:#eaf1ff;
+    --green:#0a8a4f;
+    --green-soft:#e7f6ee;
+    --amber:#f5a623;
+    --amber-soft:#fdf2dd;
+    --purple:#8b5cf6;
+    --red:#ee5a5a;
+    --teal:#16b8b8;
+    --pink:#e6479e;
+    --track:#eef1f6;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Inter",sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  .frame{width:900px;margin:0 auto;padding:28px 0 36px;}
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    box-shadow:0 1px 2px rgba(16,24,40,.04);
+    overflow:hidden;
+  }
+  .card-pad{padding:22px 24px;}
+
+  .card-title{font-size:17px;font-weight:700;letter-spacing:-.01em;color:var(--ink);margin:0;}
+  .card-sub{font-size:12.5px;color:var(--muted);margin:5px 0 0;}
+
+  /* ---------- deals table ---------- */
+  .deals{margin-top:18px;border-top:1px solid var(--line-soft);}
+  .deals-head,.deal-row{
+    display:grid;
+    grid-template-columns:1.7fr 1.5fr 1.5fr .9fr 18px;
+    align-items:center;
+    gap:14px;
+    padding:13px 4px;
+  }
+  .deals-head{
+    font-size:10.5px;font-weight:600;letter-spacing:.06em;color:var(--muted-2);
+    text-transform:uppercase;border-bottom:1px solid var(--line-soft);padding-top:6px;
+  }
+  .deal-row{border-bottom:1px solid var(--line-soft);cursor:pointer;}
+  .deal-row.open{background:#fbfcfe;}
+  .deal-name{font-size:13.5px;font-weight:600;color:var(--ink);}
+  .deal-name small{display:block;font-weight:500;color:var(--muted);font-size:11px;margin-top:2px;}
+  .deal-val{font-size:13px;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+  .deal-val b{font-weight:700;color:var(--ink);}
+  .deal-exp{font-size:12.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;}
+  .chev{justify-self:end;color:var(--muted-2);font-size:11px;}
+  .chev.up{color:var(--blue);}
+
+  .bar{height:7px;border-radius:5px;background:var(--track);overflow:hidden;position:relative;}
+  .bar > i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;display:block;}
+  .bar.amber > i{background:var(--amber);}
+  .bar.blue > i{background:var(--blue);}
+  .bar-meta{font-size:10.5px;color:var(--muted);margin-top:5px;}
+
+  /* ---------- expanded detail ---------- */
+  .detail{background:#fbfcfe;border-bottom:1px solid var(--line-soft);padding:4px 4px 20px;}
+
+  .blk-label{
+    font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--muted);margin:20px 2px 11px;display:flex;align-items:center;gap:8px;
+  }
+  .blk-label .n{
+    width:17px;height:17px;border-radius:50%;background:#e7ecf4;color:#5b6b7d;
+    font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;letter-spacing:0;
+  }
+
+  /* block 1: summary tiles */
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .tile{border:1px solid var(--line);border-radius:9px;background:#fff;padding:13px 14px;}
+  .tile .t-k{font-size:11px;color:var(--muted);margin-bottom:7px;}
+  .tile .t-v{font-size:18px;font-weight:700;color:var(--ink);letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+  .tile .t-x{font-size:11px;margin-top:5px;color:var(--muted);}
+  .tile .t-x.good{color:var(--green);font-weight:600;}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;border-radius:999px;padding:3px 9px;}
+  .pill .dot{width:6px;height:6px;border-radius:50%;}
+  .pill.green{background:var(--green-soft);color:var(--green);}
+  .pill.green .dot{background:var(--green);}
+
+  /* block 2: discount groups */
+  .group{border:1px solid var(--line);border-radius:10px;background:#fff;padding:16px 16px 17px;margin-bottom:12px;}
+  .group:last-child{margin-bottom:0;}
+  .grp-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
+  .grp-id{display:flex;align-items:center;gap:10px;}
+  .grp-swatch{width:9px;height:9px;border-radius:3px;margin-top:5px;flex:none;}
+  .grp-name{font-size:14px;font-weight:700;color:var(--ink);}
+  .grp-type{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .grp-right{text-align:right;flex:none;}
+  .grp-spend{font-size:14px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
+  .grp-saved{font-size:11.5px;color:var(--green);font-weight:600;margin-top:2px;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
+  .chip{font-size:11px;color:var(--ink-soft);background:#f2f5f9;border:1px solid var(--line);border-radius:6px;padding:3px 9px;}
+  .chip.excl{color:#a05a00;background:#fdf3e3;border-color:#f3e2c2;text-decoration:line-through;text-decoration-color:#c98b3a;}
+  .chips-lbl{font-size:11px;color:var(--muted-2);align-self:center;margin-right:2px;}
+
+  /* flat rate badge */
+  .flat{display:inline-flex;align-items:center;gap:7px;margin-top:13px;background:var(--blue-soft);color:#0b48b3;
+        border-radius:7px;padding:6px 11px;font-size:12px;font-weight:600;}
+  .flat b{font-size:13px;color:#0b3ea0;}
+
+  /* marginal tier ladder */
+  .ladder{margin-top:15px;}
+  .ladder-bar{display:flex;height:34px;border-radius:7px;overflow:hidden;border:1px solid var(--line);}
+  .seg{position:relative;display:flex;flex-direction:column;justify-content:center;padding-left:11px;color:#fff;}
+  .seg .rate{font-size:13px;font-weight:700;line-height:1;}
+  .seg .rng{font-size:9.5px;opacity:.92;margin-top:3px;letter-spacing:.01em;}
+  .seg.done{background:#bcd2f7;color:#28456f;}
+  .seg.curr{background:var(--blue);}
+  .seg.future{background:#eef2f8;color:#8a94a6;}
+  .seg.future .rng{opacity:.85;}
+  .marker{position:relative;height:0;}
+  .marker .pin{
+    position:absolute;top:5px;transform:translateX(-50%);
+    font-size:10px;font-weight:700;color:var(--blue);white-space:nowrap;
+    background:#fff;border:1px solid var(--blue);border-radius:5px;padding:2px 7px;
+    box-shadow:0 1px 2px rgba(0,0,0,.06);
+  }
+  .marker .pin:before{
+    content:"";position:absolute;top:-4px;left:50%;transform:translateX(-50%) rotate(45deg);
+    width:6px;height:6px;background:#fff;border-left:1px solid var(--blue);border-top:1px solid var(--blue);
+  }
+  .ladder-note{font-size:11px;color:var(--muted);margin-top:24px;}
+  .ladder-note b{color:var(--ink-soft);font-weight:600;}
+
+  /* block 3: pacing */
+  .pace{border:1px solid var(--line);border-radius:10px;background:#fff;padding:16px 16px 18px;}
+  .pace-bar{height:11px;border-radius:6px;background:var(--track);position:relative;overflow:visible;margin:8px 0 0;}
+  .pace-bar > .fill{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--blue);}
+  .pace-bar > .proj{position:absolute;top:-3px;bottom:-3px;width:2px;background:#1b2733;border-radius:2px;}
+  .pace-scale{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:8px;}
+  .pace-legend{display:flex;gap:18px;margin-top:14px;flex-wrap:wrap;}
+  .pl{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink-soft);}
+  .pl .k{width:12px;height:7px;border-radius:3px;}
+  .pl .k.cur{background:var(--blue);}
+  .pl .k.min{width:2px;height:13px;border-radius:1px;background:#1b2733;}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+  .sub{border:1px solid var(--line);border-radius:9px;padding:12px 13px;background:#fcfdff;}
+  .sub .s-top{display:flex;align-items:center;justify-content:space-between;}
+  .sub .s-name{font-size:12px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:7px;}
+  .sub .s-name .sw{width:8px;height:8px;border-radius:2px;}
+  .sub .s-tag{font-size:10px;font-weight:600;border-radius:999px;padding:2px 8px;}
+  .s-tag.ok{background:var(--green-soft);color:var(--green);}
+  .s-tag.watch{background:var(--amber-soft);color:#a76a08;}
+  .sub .s-bar{height:6px;border-radius:4px;background:var(--track);margin:10px 0 7px;overflow:hidden;position:relative;}
+  .sub .s-bar > i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;}
+  .sub .s-line{font-size:10.5px;color:var(--muted);}
+  .sub .s-line b{color:var(--ink-soft);font-weight:600;}
+
+  .note{
+    display:flex;gap:10px;background:#f1f6ff;border:1px solid #dbe7ff;border-radius:9px;
+    padding:12px 14px;margin-top:14px;font-size:11.5px;color:#33485f;line-height:1.5;
+  }
+  .note .i{width:15px;height:15px;border-radius:50%;background:var(--blue);color:#fff;font-size:10px;font-weight:700;
+           display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px;}
+  .note b{color:#1b2733;font-weight:700;}
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="card">
+      <div class="card-pad">
+        <h2 class="card-title">Commitment &amp; volume deals</h2>
+        <p class="card-sub">Active agreements on your account · select a row for details</p>
+
+        <!-- table -->
+        <div class="deals">
+          <div class="deals-head">
+            <div>Deal name</div><div>Pacing</div><div>Spend / tier</div><div style="text-align:right">Expires</div><div></div>
+          </div>
+
+          <!-- selected/expanded row -->
+          <div class="deal-row open">
+            <div class="deal-name">Enterprise Commitment — FY2026<small>Multi-product · marginal + flat discounts</small></div>
+            <div>
+              <div class="bar amber"><i style="width:55%"></i></div>
+              <div class="bar-meta">55% of term minimum · on track</div>
+            </div>
+            <div class="deal-val"><b>$66,300</b> of $120,000</div>
+            <div class="deal-exp">Dec 31, 2026</div>
+            <div class="chev up">▲</div>
+          </div>
+
+          <!-- DETAIL -->
+          <div class="detail">
+
+            <!-- BLOCK 1 — STRUCTURE -->
+            <div class="blk-label"><span class="n">1</span> How your agreement is structured</div>
+            <div class="tiles">
+              <div class="tile">
+                <div class="t-k">Term spend minimum</div>
+                <div class="t-v">$120,000</div>
+                <div class="t-x">Jan 1 – Dec 31, 2026</div>
+              </div>
+              <div class="tile">
+                <div class="t-k">Spend to date</div>
+                <div class="t-v">$66,300</div>
+                <div class="t-x">55% · 208 days left</div>
+              </div>
+              <div class="tile">
+                <div class="t-k">Net savings this term</div>
+                <div class="t-v" style="color:var(--green)">$9,148</div>
+                <div class="t-x good">from your discounts</div>
+              </div>
+              <div class="tile">
+                <div class="t-k">Status</div>
+                <div style="margin-top:2px"><span class="pill green"><span class="dot"></span>On track</span></div>
+                <div class="t-x">projected $121,400 at term end</div>
+              </div>
+            </div>
+
+            <!-- BLOCK 2 — ELIGIBILITY + RATES -->
+            <div class="blk-label"><span class="n">2</span> Your discounts &amp; which products are eligible</div>
+
+            <!-- group A: marginal -->
+            <div class="group">
+              <div class="grp-top">
+                <div class="grp-id">
+                  <span class="grp-swatch" style="background:var(--purple)"></span>
+                  <div>
+                    <div class="grp-name">AI / ML — Inference &amp; GPU</div>
+                    <div class="grp-type">Marginal tiered discount · rate rises as eligible spend grows</div>
+                  </div>
+                </div>
+                <div class="grp-right">
+                  <div class="grp-spend">$61,200</div>
+                  <div class="grp-saved">saved $7,930</div>
+                </div>
+              </div>
+
+              <div class="chips">
+                <span class="chips-lbl">Eligible:</span>
+                <span class="chip">GenAI Serverless Inference</span>
+                <span class="chip">Dedicated Inference</span>
+                <span class="chip">GPU Droplets</span>
+                <span class="chip excl">Bandwidth</span>
+              </div>
+
+              <div class="ladder">
+                <div class="ladder-bar">
+                  <div class="seg done" style="flex:0 0 32%"><span class="rate">10%</span><span class="rng">$0 – $50k</span></div>
+                  <div class="seg curr" style="flex:0 0 32%"><span class="rate">15%</span><span class="rng">$50k – $100k</span></div>
+                  <div class="seg future" style="flex:1 1 auto"><span class="rate">20%</span><span class="rng">$100k +</span></div>
+                </div>
+                <div class="marker"><span class="pin" style="left:39.2%">You are here · $61.2k</span></div>
+                <div class="ladder-note"><b>Marginal:</b> each band is discounted on its own — the first $50k earns 10%, spend from $50k–$100k earns 15%. The 20% rate applies only to spend above $100k.</div>
+              </div>
+            </div>
+
+            <!-- group B: flat -->
+            <div class="group">
+              <div class="grp-top">
+                <div class="grp-id">
+                  <span class="grp-swatch" style="background:var(--blue)"></span>
+                  <div>
+                    <div class="grp-name">Core DO — Compute &amp; Storage</div>
+                    <div class="grp-type">Flat discount · same rate on all eligible spend</div>
+                  </div>
+                </div>
+                <div class="grp-right">
+                  <div class="grp-spend">$5,100</div>
+                  <div class="grp-saved">saved $1,218</div>
+                </div>
+              </div>
+
+              <div class="chips">
+                <span class="chips-lbl">Eligible:</span>
+                <span class="chip">Droplets</span>
+                <span class="chip">Spaces Object Storage</span>
+                <span class="chip">Managed Databases</span>
+                <span class="chip excl">GPU Droplets</span>
+              </div>
+
+              <div class="flat"><b>12%</b> off list — applied to every eligible SKU in this group</div>
+            </div>
+
+            <!-- BLOCK 3 — TRACKING -->
+            <div class="blk-label"><span class="n">3</span> How you're tracking toward your commitment</div>
+            <div class="pace">
+              <div style="display:flex;justify-content:space-between;align-items:baseline">
+                <div style="font-size:12.5px;font-weight:700;color:var(--ink)">Combined spend toward $120,000 term minimum</div>
+                <div style="font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums">$66,300 · 55%</div>
+              </div>
+              <div class="pace-bar">
+                <div class="fill" style="width:55%"></div>
+                <div class="proj" style="left:99.5%" title="projected"></div>
+              </div>
+              <div class="pace-scale"><span>$0</span><span>$60k</span><span>$120k minimum</span></div>
+              <div class="pace-legend">
+                <span class="pl"><span class="k cur"></span> Spend to date</span>
+                <span class="pl"><span class="k min"></span> Projected at term end ($121.4k)</span>
+              </div>
+
+              <div class="split">
+                <div class="sub">
+                  <div class="s-top">
+                    <div class="s-name"><span class="sw" style="background:var(--purple)"></span>AI / ML</div>
+                    <span class="s-tag ok">On pace</span>
+                  </div>
+                  <div class="s-bar"><i style="width:61%;background:var(--purple)"></i></div>
+                  <div class="s-line"><b>$61,200</b> of ~$100k expected share</div>
+                </div>
+                <div class="sub">
+                  <div class="s-top">
+                    <div class="s-name"><span class="sw" style="background:var(--blue)"></span>Core DO</div>
+                    <span class="s-tag watch">Below pace</span>
+                  </div>
+                  <div class="s-bar"><i style="width:26%;background:var(--blue)"></i></div>
+                  <div class="s-line"><b>$5,100</b> of ~$20k expected share</div>
+                </div>
+              </div>
+
+              <div class="note">
+                <span class="i">i</span>
+                <div>All eligible spend consolidates toward the single <b>$120,000</b> term minimum. If a product line finishes below its share, any shortfall true-up is billed to <b>that</b> line — <b>AI / ML</b> and <b>Core DO</b> surcharges are tracked separately, never blended. Pre-payments can cover a shortfall but don't lower the minimum.</div>
+              </div>
+            </div>
+
+          </div>
+          <!-- /detail -->
+
+          <!-- second collapsed row -->
+          <div class="deal-row">
+            <div class="deal-name">Volume marginal discount<small>Account-wide floor</small></div>
+            <div>
+              <div class="bar blue"><i style="width:42%"></i></div>
+              <div class="bar-meta">Commitment floor active</div>
+            </div>
+            <div class="deal-val">Commitment floor · <b>15%</b></div>
+            <div class="deal-exp">Dec 31, 2026</div>
+            <div class="chev">▾</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
