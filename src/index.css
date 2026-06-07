@@ -29,6 +29,7 @@
   --color-do-green-50: #e8f9ee;
   --color-do-green-500: #15cd72;
   --color-do-green-600: #0db162;
+  --color-do-green-700: #0a8f4f;
   --color-do-yellow-50: #fff8e6;
   --color-do-yellow-400: #ffc940;
   --color-do-yellow-500: #f2b600;
@@ -36,6 +37,21 @@
   --color-do-red-500: #e03e2d;
   --color-do-red-600: #cc3525;
   --color-do-red-700: #b22d1f;
+
+  /* Pacing / accent — Volume (marginal) deals */
+  --color-do-violet-50: #eef0fb;
+  --color-do-violet-100: #e0e3f8;
+  --color-do-violet-500: #5b5bd6;
+  --color-do-violet-600: #4f4fc4;
+  --color-do-violet-700: #3f3fa3;
+
+  /* Pacing / accent — Commitment deals (at risk / behind pace) */
+  --color-do-orange-50: #fff6e9;
+  --color-do-orange-100: #ffe9c7;
+  --color-do-orange-400: #f5a623;
+  --color-do-orange-500: #e8910c;
+  --color-do-orange-600: #c9790a;
+  --color-do-orange-700: #9c5d07;
 
   /* DigitalOcean Navy (sidebar/dark elements) */
   --color-do-navy: #031b4e;
