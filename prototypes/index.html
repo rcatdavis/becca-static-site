@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prototypes</title>
+<style>
+  :root{
+    --ink:#1b2733;--muted:#8a94a6;--line:#e6e9ef;--bg:#f4f6f9;--card:#fff;
+    --blue:#0066ff;--green:#0a8a4f;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Inter",sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:760px;margin:0 auto;padding:48px 24px 64px;}
+  h1{font-size:24px;font-weight:700;letter-spacing:-.02em;margin:0;}
+  .lede{color:var(--muted);font-size:13.5px;margin:8px 0 28px;}
+  a.card{
+    display:block;text-decoration:none;color:inherit;background:var(--card);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    box-shadow:0 1px 2px rgba(16,24,40,.04);transition:box-shadow .15s,transform .15s;
+  }
+  a.card:hover{box-shadow:0 6px 18px rgba(16,24,40,.10);transform:translateY(-1px);}
+  .thumb{display:block;width:100%;border-bottom:1px solid var(--line);background:#fbfcfe;}
+  .body{padding:16px 18px 18px;}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--blue);background:#eaf1ff;border-radius:999px;padding:3px 9px;margin-bottom:10px;}
+  .ttl{font-size:16px;font-weight:700;margin:0 0 5px;}
+  .desc{font-size:13px;color:#41505f;line-height:1.5;margin:0;}
+  .meta{font-size:11.5px;color:var(--muted);margin-top:12px;}
+  .foot{color:var(--muted);font-size:11.5px;margin-top:28px;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Prototypes</h1>
+    <p class="lede">Internal design prototypes &amp; explorations.</p>
+
+    <a class="card" href="billing-discount-clarity/">
+      <img class="thumb" src="billing-discount-clarity/preview.png" alt="Billing discount-clarity prototype preview" />
+      <div class="body">
+        <span class="tag">Billing</span>
+        <p class="ttl">Commitment &amp; volume deals — discount clarity</p>
+        <p class="desc">Redesigned expanded detail that makes a complex multi-product, marginal + flat
+          commitment easy to understand: how the agreement is structured, which products are eligible,
+          and how spend is tracking toward the commitment (with AI/ML vs Core DO surcharges tracked separately).</p>
+        <div class="meta">Updated Jun 2026 · style-matched to the billing console</div>
+      </div>
+    </a>
+
+    <p class="foot">Hosted on internal GitHub Pages.</p>
+  </div>
+</body>
+</html>
