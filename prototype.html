@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Serverless Budgets & Limits — DigitalOcean</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { do: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'] },
+          colors: {
+            do: {
+              blue: { 50: '#e6f0ff', 100: '#cce0ff', 200: '#99c2ff', 300: '#66a3ff', 400: '#3385ff', 500: '#0069ff', 600: '#0054cc', 700: '#003f99', 800: '#002a66', 900: '#001533' },
+              gray: { 50: '#f5f7fa', 100: '#ebeef2', 200: '#d5dae1', 300: '#b3bac5', 400: '#8c95a4', 500: '#6b7689', 600: '#4e5d78', 700: '#3d4f6f', 800: '#2c3e6b', 900: '#1a2744' },
+              green: { 50: '#e8f9ee', 500: '#15cd72', 600: '#0db162' },
+              yellow: { 50: '#fff8e6', 400: '#ffc940', 500: '#f2b600' },
+              red: { 50: '#fff0f0', 500: '#e03e2d', 600: '#cc3525', 700: '#b22d1f' },
+              navy: '#031b4e',
+              bg: '#f5f7fa',
+              surface: '#ffffff',
+              border: '#d5dae1',
+            }
+          },
+          boxShadow: {
+            card: '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)',
+            modal: '0 10px 40px rgba(0,0,0,0.2)',
+            dropdown: '0 4px 12px rgba(0,0,0,0.12)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    [x-cloak] { display: none !important; }
+  </style>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-do-bg text-do-gray-900 text-sm antialiased" x-data="app()">
+
+  <!-- Disclaimer bar -->
+  <div class="border-b border-do-border bg-white">
+    <div class="max-w-6xl mx-auto px-6 py-2.5 flex items-center gap-2">
+      <svg class="w-4 h-4 text-do-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span class="text-xs text-do-gray-500">Usage data is updated hourly. Some products may experience slight delays.</span>
+    </div>
+  </div>
+
+  <main class="max-w-6xl mx-auto px-6 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-do-gray-900">Serverless Budgets &amp; Limits</h1>
+      <button @click="createAlertOpen = true" class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-do-blue-500 rounded-md hover:bg-do-blue-600 transition-colors shadow-sm cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Create Spend Alert
+      </button>
+    </div>
+
+    <!-- Warning banner -->
+    <div x-show="bannerVisible" x-transition class="flex items-center justify-between gap-4 px-5 py-4 rounded-lg border border-do-yellow-400/40 bg-do-yellow-50 mb-6">
+      <div class="flex items-center gap-3">
+        <svg class="w-5 h-5 text-do-yellow-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <p class="text-sm text-do-gray-800">
+          <span class="font-semibold">You are nearing your Tier 2 GenAI Token limits (85% used).</span> Avoid interruption:
+        </p>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <button @click="limitIncreaseOpen = true" class="px-4 py-2 text-sm font-medium text-white bg-do-blue-500 rounded-md hover:bg-do-blue-600 transition-colors cursor-pointer">Increase limit now</button>
+        <button @click="bannerVisible = false" class="p-1 text-do-gray-400 hover:text-do-gray-600 transition-colors cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Alerts -->
+    <h2 class="text-xs font-semibold text-do-gray-500 uppercase tracking-wider mb-3">Active Alerts</h2>
+    <div class="bg-do-surface rounded-lg border border-do-border shadow-card overflow-hidden">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-do-border">
+            <th class="text-left px-5 py-3 text-xs font-semibold text-do-gray-500 uppercase tracking-wider">Product</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold text-do-gray-500 uppercase tracking-wider">Usage</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold text-do-gray-500 uppercase tracking-wider">Milestones</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold text-do-gray-500 uppercase tracking-wider">Safety Net</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(alert, idx) in alerts" :key="alert.id">
+            <tr :class="idx < alerts.length - 1 ? 'border-b border-do-border' : ''" class="hover:bg-do-gray-50/50 transition-colors">
+              <td class="px-5 py-4 text-sm font-medium text-do-gray-800" x-text="alert.product"></td>
+              <td class="px-5 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-24 h-2 rounded-full bg-do-gray-100 overflow-hidden">
+                    <div class="h-full rounded-full transition-all" :class="barColor(alert)" :style="'width:' + pct(alert) + '%'"></div>
+                  </div>
+                  <span class="text-do-gray-600 text-sm whitespace-nowrap" x-text="'$' + alert.current + ' / $' + alert.limit"></span>
+                </div>
+              </td>
+              <td class="px-5 py-4">
+                <div class="flex items-center gap-1.5">
+                  <template x-for="m in alert.milestones" :key="m">
+                    <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded text-xs font-semibold bg-do-blue-500 text-white" x-text="m + '%'"></span>
+                  </template>
+                </div>
+              </td>
+              <td class="px-5 py-4">
+                <span :class="alert.safetyNet === 'auto-pause' ? 'bg-do-red-50 text-do-red-600 border-do-red-500/30' : 'bg-do-gray-50 text-do-gray-600 border-do-gray-300'" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border" x-text="alert.safetyNet === 'auto-pause' ? 'Auto-Pause Enabled' : 'Alert Only'"></span>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Create Spend Alert Modal -->
+  <div x-show="createAlertOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-[1px]" @click="createAlertOpen = false"></div>
+    <div class="relative bg-do-surface rounded-lg shadow-modal w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto" @click.stop>
+      <div class="flex items-center justify-between px-6 pt-6 pb-0">
+        <h2 class="text-xl font-semibold text-do-gray-900">Create Spend Alert</h2>
+        <button @click="createAlertOpen = false" class="p-1 text-do-gray-400 hover:text-do-gray-600 transition-colors rounded cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="px-6 py-5 space-y-5">
+        <!-- Scope -->
+        <div>
+          <label class="block text-sm font-medium text-do-gray-700 mb-1.5">Scope</label>
+          <div class="relative" x-data="{ dropOpen: false }">
+            <button @click="dropOpen = !dropOpen" class="w-full flex items-center justify-between px-3 py-2.5 border border-do-border rounded-md text-sm text-left hover:border-do-blue-500 focus:border-do-blue-500 focus:ring-1 focus:ring-do-blue-500 transition-colors bg-white cursor-pointer">
+              <span :class="selectedProduct ? 'text-do-gray-900' : 'text-do-gray-400'" x-text="selectedProduct || 'Select a product'"></span>
+              <svg class="w-4 h-4 text-do-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div x-show="dropOpen" @click.away="dropOpen = false" x-transition class="absolute z-10 mt-1 w-full bg-white border border-do-border rounded-md shadow-dropdown">
+              <template x-for="p in products" :key="p">
+                <button @click="selectedProduct = p; dropOpen = false" class="w-full text-left px-3 py-2 text-sm text-do-gray-700 hover:bg-do-blue-50 hover:text-do-blue-600 transition-colors cursor-pointer" x-text="p"></button>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monthly Limit -->
+        <div>
+          <label class="block text-sm font-medium text-do-gray-700 mb-1.5">Monthly Limit (USD)</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-do-gray-400 text-sm">$</span>
+            <input type="number" min="0" x-model="monthlyLimit" class="w-full pl-7 pr-3 py-2.5 border border-do-border rounded-md text-sm text-do-gray-900 hover:border-do-blue-500 focus:border-do-blue-500 focus:ring-1 focus:ring-do-blue-500 transition-colors outline-none" />
+          </div>
+        </div>
+
+        <!-- Proactive Alerts -->
+        <div>
+          <label class="block text-sm font-medium text-do-gray-700 mb-2">Proactive Alerts</label>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2.5 cursor-pointer">
+              <input type="checkbox" checked class="w-4 h-4 rounded border-do-gray-300 text-do-blue-500 accent-do-blue-500 cursor-pointer" />
+              <span class="text-sm text-do-gray-700">Notify at 50%</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer">
+              <input type="checkbox" checked class="w-4 h-4 rounded border-do-gray-300 text-do-blue-500 accent-do-blue-500 cursor-pointer" />
+              <span class="text-sm text-do-gray-700">Notify at 75%</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer">
+              <input type="checkbox" checked class="w-4 h-4 rounded border-do-gray-300 text-do-blue-500 accent-do-blue-500 cursor-pointer" />
+              <span class="text-sm text-do-gray-700">Notify at 90%</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Action at 100% -->
+        <div>
+          <label class="block text-sm font-medium text-do-gray-700 mb-2">Action at 100% Limit</label>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2.5 cursor-pointer">
+              <input type="radio" name="safety" value="email" x-model="safetyAction" class="w-4 h-4 text-do-blue-500 accent-do-blue-500 cursor-pointer" />
+              <span class="text-sm text-do-gray-700">Send Email Alert Only</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer">
+              <input type="radio" name="safety" value="pause" x-model="safetyAction" class="w-4 h-4 text-do-blue-500 accent-do-blue-500 cursor-pointer" />
+              <span class="text-sm text-do-gray-700">Automatically Pause/Freeze Resource</span>
+            </label>
+          </div>
+          <div x-show="safetyAction === 'pause'" x-transition class="mt-3 flex items-start gap-2 px-3 py-2.5 rounded-md bg-do-yellow-50 border border-do-yellow-400/30">
+            <svg class="w-4 h-4 text-do-yellow-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <p class="text-xs text-do-gray-700">Pausing resources may disrupt availability for your applications. Ensure you have fallback infrastructure before enabling this option.</p>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-end gap-3 pt-2 border-t border-do-border">
+          <button @click="createAlertOpen = false" class="px-4 py-2 text-sm font-medium text-do-gray-700 bg-white border border-do-border rounded-md hover:bg-do-gray-50 transition-colors cursor-pointer">Cancel</button>
+          <button @click="createAlertOpen = false" class="px-4 py-2 text-sm font-medium text-white bg-do-blue-500 rounded-md hover:bg-do-blue-600 transition-colors cursor-pointer">Save Alert</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Limit Increase Modal -->
+  <div x-show="limitIncreaseOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-[1px]" @click="limitIncreaseOpen = false"></div>
+    <div class="relative bg-do-surface rounded-lg shadow-modal w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto" @click.stop>
+      <div class="flex items-center justify-between px-6 pt-6 pb-0">
+        <h2 class="text-xl font-semibold text-do-gray-900">Increase Your Spending Limit</h2>
+        <button @click="limitIncreaseOpen = false" class="p-1 text-do-gray-400 hover:text-do-gray-600 transition-colors rounded cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="px-6 py-5 space-y-5">
+        <p class="text-sm text-do-gray-600">Make a one-time prepayment to unlock a higher monthly spending limit. Choose the tier that fits your workload.</p>
+
+        <!-- Tier Cards -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Tier 2 -->
+          <button @click="selectedTier = 'tier2'" :class="selectedTier === 'tier2' ? 'border-do-blue-500 bg-do-blue-50/50 shadow-sm' : 'border-do-border bg-white hover:border-do-gray-300'" class="relative flex flex-col items-start p-4 rounded-lg border-2 text-left transition-all cursor-pointer">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-8 h-8 rounded-md flex items-center justify-center bg-do-gray-100 text-do-gray-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </div>
+              <span class="text-sm font-semibold text-do-gray-900">Tier 2</span>
+            </div>
+            <div class="mb-3">
+              <span class="text-2xl font-bold text-do-gray-900">$50</span>
+              <span class="text-xs text-do-gray-500 ml-1">prepaid credit</span>
+            </div>
+            <p class="text-xs text-do-gray-500 mb-3">Unlocks <span class="font-semibold text-do-gray-700">$500</span>/mo limit</p>
+            <ul class="space-y-1.5 w-full">
+              <li class="flex items-center gap-1.5 text-xs text-do-gray-600">
+                <svg class="w-3 h-3 text-do-green-500 shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                $500/mo spending limit
+              </li>
+              <li class="flex items-center gap-1.5 text-xs text-do-gray-600">
+                <svg class="w-3 h-3 text-do-green-500 shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                Standard support priority
+              </li>
+              <li class="flex items-center gap-1.5 text-xs text-do-gray-600">
+                <svg class="w-3 h-3 text-do-green-500 shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                All serverless products
+              </li>
+            </ul>
+            <div x-show="selectedTier === 'tier2'" class="absolute top-3 right-3 w-5 h-5 bg-do-blue-500 rounded-full flex items-center justify-center">
+              <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </button>
+
+          <!-- Tier 3 -->
+          <button @click="selectedTier = 'tier3'" :class="selectedTier === 'tier3' ? 'border-do-blue-500 bg-do-blue-50/50 shadow-sm' : 'border-do-border bg-white hover:border-do-gray-300'" class="relative flex flex-col items-start p-4 rounded-lg border-2 text-left transition-all cursor-pointer">
+            <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-do-blue-500 text-white rounded-full">Recommended</span>
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-8 h-8 rounded-md flex items-center justify-center bg-do-blue-500 text-white">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </div>
+              <span class="text-sm font-semibold text-do-gray-900">Tier 3</span>
+            </div>
+            <div class="mb-3">
+              <span class="text-2xl font-bold text-do-gray-900">$500</span>
+              <span class="text-xs text-do-gray-500 ml-1">prepaid credit</span>
+            </div>
+            <p class="text-xs text-do-gray-500 mb-3">Unlocks <span class="font-semibold text-do-gray-700">$5,000</span>/mo limit</p>
+            <ul class="space-y-1.5 w-full">
+              <li class="flex items-center gap-1.5 text-xs text-do-gray-600">
+                <svg class="w-3 h-3 text-do-green-500 shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                $5,000/mo spending limit
+              </li>
+              <li class="flex items-center gap-1.5 text-xs text-do-gray-600">
+                <svg class="w-3 h-3 text-do-green-500 shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                Priority support
+              </li>
+              <li class="flex items-center gap-1.5 text-xs text-do-gray-600">
+                <svg class="w-3 h-3 text-do-green-500 shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                All serverless products
+              </li>
+              <li class="flex items-center gap-1.5 text-xs text-do-gray-600">
+                <svg class="w-3 h-3 text-do-green-500 shrink-0" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                Early access to new features
+              </li>
+            </ul>
+            <div x-show="selectedTier === 'tier3'" class="absolute top-3 right-3 w-5 h-5 bg-do-blue-500 rounded-full flex items-center justify-center">
+              <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </button>
+        </div>
+
+        <!-- Info box -->
+        <div class="flex items-start gap-2 px-3 py-2.5 rounded-md bg-do-blue-50 border border-do-blue-200">
+          <span class="text-do-blue-500 text-sm font-bold mt-0.5">i</span>
+          <p class="text-xs text-do-gray-700"><span class="font-medium">Your prepayment is an account credit, not a fee.</span> It will be applied toward your future usage charges. Unused credit remains on your account.</p>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-end gap-3 pt-2 border-t border-do-border">
+          <button @click="limitIncreaseOpen = false" class="px-4 py-2 text-sm font-medium text-do-gray-700 bg-white border border-do-border rounded-md hover:bg-do-gray-50 transition-colors cursor-pointer">Cancel</button>
+          <button @click="limitIncreaseOpen = false" class="px-4 py-2 text-sm font-medium text-white bg-do-blue-500 rounded-md hover:bg-do-blue-600 transition-colors cursor-pointer" x-text="'Confirm & Pay $' + (selectedTier === 'tier3' ? '500' : '50')"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function app() {
+      return {
+        bannerVisible: true,
+        createAlertOpen: false,
+        limitIncreaseOpen: false,
+        selectedProduct: '',
+        monthlyLimit: '500',
+        safetyAction: 'email',
+        selectedTier: 'tier3',
+        products: ['GenAI Tokens', 'Serverless Inference', 'Serverless GPUs', 'Serverless Functions'],
+        alerts: [
+          { id: 1, product: 'Serverless Inference', current: 320, limit: 500, milestones: [50, 75, 90], safetyNet: 'auto-pause' },
+          { id: 2, product: 'GenAI Tokens', current: 425, limit: 500, milestones: [50, 75, 90], safetyNet: 'alert-only' },
+          { id: 3, product: 'Serverless GPUs', current: 180, limit: 500, milestones: [50, 75, 90], safetyNet: 'auto-pause' },
+        ],
+        pct(alert) { return Math.min((alert.current / alert.limit) * 100, 100); },
+        barColor(alert) {
+          const p = this.pct(alert);
+          if (p >= 85) return 'bg-do-red-500';
+          if (p >= 60) return 'bg-do-yellow-400';
+          return 'bg-do-green-500';
+        },
+      }
+    }
+  </script>
+</body>
+</html>
